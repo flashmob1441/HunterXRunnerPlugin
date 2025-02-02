@@ -1,0 +1,103 @@
+package org.flashmob.hunterXHunterPlugin.events;
+
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.sound.Sound;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.TitlePart;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Server;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.flashmob.hunterXHunterPlugin.managers.RoleManager;
+import org.flashmob.hunterXHunterPlugin.utils.Role;
+
+import java.util.Optional;
+
+public class GameLogicListener implements Listener {
+
+    private final RoleManager roleManager;
+    private final Plugin plugin;
+    // Задержка до возрождения мертвого Runner (секунды)
+    private final int RESPAWN_DELAY_SECONDS = 10;
+    // Флаг окончания игры
+    private boolean gameEnded = false;
+
+    public GameLogicListener(RoleManager roleManager, Plugin plugin) {
+        this.roleManager = roleManager;
+        this.plugin = plugin;
+    }
+
+    @EventHandler
+    public void onRunnerDeath(PlayerDeathEvent event) {
+        Player deadPlayer = event.getEntity();
+        Optional<Role> roleOpt = roleManager.getRole(deadPlayer);
+        if (roleOpt.isEmpty() || roleOpt.get() != Role.RUNNERS) {
+            // Если это не Runner, выходим
+            return;
+        }
+
+        // Через 1 тик переводим игрока в режим Наблюдателя и назначаем объект наблюдения (если возможно)
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                deadPlayer.setGameMode(GameMode.SPECTATOR);
+                // Пытаемся назначить в качестве цели наблюдения любого живого Runner (в режиме выживания)
+                Player target = getAliveRunner(deadPlayer);
+                if (target != null) {
+                    deadPlayer.setSpectatorTarget(target);
+                }
+            }
+        }.runTaskLater(plugin, 1L);
+
+        // Через несколько тиков (2 тикa) проверяем, остались ли живые Runners – если нет, завершаем игру
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                checkGameEnd();
+            }
+        }.runTaskLater(plugin, 2L);
+
+        // Запланировать возрождение мертвого Runner через заданное время, если игра ещё идет
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!gameEnded) {
+                    deadPlayer.setGameMode(GameMode.SURVIVAL);
+                }
+            }
+        }.runTaskLater(plugin, RESPAWN_DELAY_SECONDS * 20L);
+    }
+
+    // Метод для поиска живого Runner (в режиме выживания), отличного от только что умершего
+    private Player getAliveRunner(Player excluded) {
+        for (Player runner : roleManager.getPlayersInRole(Role.RUNNERS)) {
+            if (!runner.equals(excluded) && runner.getGameMode() == GameMode.SURVIVAL) {
+                return runner;
+            }
+        }
+        return null;
+    }
+
+    // Проверка всех Runners: если ни один не находится в режиме выживания, завершаем игру
+    private void checkGameEnd() {
+        boolean allDead = true;
+        for (Player runner : roleManager.getPlayersInRole(Role.RUNNERS)) {
+            if (runner.getGameMode() == GameMode.SURVIVAL) {
+                allDead = false;
+                break;
+            }
+        }
+        if (allDead && !gameEnded) {
+            gameEnded = true;
+            Server server = Bukkit.getServer();
+            // Выводим сообщение о победе Hunters для всех игроков и проигрываем звук
+            server.playSound(Sound.sound(Key.key("minecraft:ui_toast_challenge_complete"), Sound.Source.PLAYER, 1.0f, 1.0f));
+            server.sendTitlePart(TitlePart.TITLE, Component.text("Победили Hunters"));
+        }
+    }
+}
