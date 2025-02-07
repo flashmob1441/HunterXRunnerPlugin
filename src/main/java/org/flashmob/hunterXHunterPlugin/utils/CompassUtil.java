@@ -11,18 +11,12 @@ import org.bukkit.inventory.meta.CompassMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
-import org.flashmob.hunterXHunterPlugin.managers.CompassManager;
-import org.flashmob.hunterXHunterPlugin.managers.RoleManager;
+
+import java.util.Objects;
 
 public class CompassUtil {
 
-    private final Plugin plugin;
-
-    public CompassUtil(Plugin plugin) {
-        this.plugin = plugin;
-    }
-
-    public void giveCompass(Player player) {
+    public static void giveCompass(Plugin plugin, Player player) {
         // Выдаем игроку компас
         ItemStack compassItem = new ItemStack(Material.COMPASS);
         CompassMeta compassMeta = (CompassMeta) compassItem.getItemMeta();
@@ -34,5 +28,15 @@ public class CompassUtil {
         data.set(new NamespacedKey(plugin, "item-identifier"), PersistentDataType.STRING, "runner-tracker");
         compassItem.setItemMeta(compassMeta);
         player.getInventory().addItem(compassItem);
+    }
+
+    public static boolean isCompass(Plugin plugin, ItemStack item) {
+        if (!item.hasItemMeta()) {
+            return false;
+        }
+
+        PersistentDataContainer data = item.getItemMeta().getPersistentDataContainer();
+        NamespacedKey key = new NamespacedKey(plugin, "item-identifier");
+        return data.has(key, PersistentDataType.STRING) && Objects.requireNonNull(data.get(key, PersistentDataType.STRING)).equalsIgnoreCase("runner-tracker");
     }
 }

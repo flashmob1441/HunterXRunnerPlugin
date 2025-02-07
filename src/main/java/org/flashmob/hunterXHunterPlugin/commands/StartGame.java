@@ -27,14 +27,12 @@ import java.util.*;
 public class StartGame implements CommandExecutor {
     private final RoleManager roleManager;
     private final Plugin plugin;
-    private final CompassUtil compassUtil;
     // Длительность обратного отсчёта (например, 10 секунд)
     private static int COUNTDOWN_SECONDS;
 
-    public StartGame(RoleManager roleManager, Plugin plugin, CompassUtil compassUtil) {
+    public StartGame(RoleManager roleManager, Plugin plugin) {
         this.roleManager = roleManager;
         this.plugin = plugin;
-        this.compassUtil = compassUtil;
 
         COUNTDOWN_SECONDS = plugin.getConfig().getInt("start_timer_in_seconds");
     }
@@ -61,7 +59,7 @@ public class StartGame implements CommandExecutor {
         // Для игроков с ролью HUNTERS задаём режим Adventure (заморозка)
         for (Player hunter : roleManager.getPlayersInRole(Role.HUNTERS)) {
             hunter.setGameMode(GameMode.ADVENTURE);
-            compassUtil.giveCompass(hunter);
+            CompassUtil.giveCompass(plugin, hunter);
         }
 
         Utils.setGameStarted(true);

@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ListRole implements CommandExecutor, TabCompleter {
 
@@ -27,7 +29,7 @@ public class ListRole implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (args.length < 1) {
+        if (args.length == 0) {
             player.sendMessage("Использование: /listrole <hunters|runners>");
             return true;
         }
@@ -42,13 +44,10 @@ public class ListRole implements CommandExecutor, TabCompleter {
         if (playersInTeam.isEmpty()) {
             player.sendMessage("В команде " + team.getDisplayName() + " нет игроков.");
         } else {
-            StringBuilder message = new StringBuilder("Игроки в команде " + team.getDisplayName() + ": ");
-            for (Player teamPlayer : playersInTeam) {
-                message.append(teamPlayer.getName()).append(", ");
-            }
-            // Удаляем завершающую запятую и пробел
-            message.setLength(message.length() - 2);
-            player.sendMessage(message.toString());
+            String names = playersInTeam.stream()
+                    .map(Player::getName)
+                    .collect(Collectors.joining(", "));
+            player.sendMessage("Игроки в команде " + team.getDisplayName() + ": " + names);
         }
         return true;
     }
@@ -56,15 +55,12 @@ public class ListRole implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, String[] args) {
         // Подсказки должны выводиться, когда игрок вводит первый аргумент
-        List<String> suggestions = new ArrayList<>();
-        if (args.length == 1) {
-            suggestions.add("hunters");
-            suggestions.add("runners");
-
-            // Фильтруем подсказки по введённому префиксу
-            String input = args[0].toLowerCase();
-            suggestions.removeIf(option -> !option.startsWith(input));
+        if (args.length != 1) {
+            return new ArrayList<>();
         }
-        return suggestions;
+        String input = args[0].toLowerCase();
+        return Stream.of("hunters", "runners")
+                .filter(option -> option.startsWith(input))
+                .collect(Collectors.toList());
     }
 }

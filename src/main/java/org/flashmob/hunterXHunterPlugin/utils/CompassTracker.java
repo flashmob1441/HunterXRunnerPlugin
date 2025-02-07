@@ -131,26 +131,15 @@ public class CompassTracker {
 
     private ItemStack getPlayerCompass() {
         ItemStack mainHandItem = player.getInventory().getItemInMainHand();
-        if (isCompass(mainHandItem)) {
+        if (CompassUtil.isCompass(plugin, mainHandItem)) {
             return mainHandItem;
         }
         // Если нет – пробуем off-hand
         ItemStack offHandItem = player.getInventory().getItemInOffHand();
-        if (isCompass(offHandItem)) {
+        if (CompassUtil.isCompass(plugin, offHandItem)) {
             return offHandItem;
         }
         return null;
-    }
-
-    // Проверка, что заданный ItemStack — компас
-    private boolean isCompass(ItemStack item) {
-        if (!item.hasItemMeta()) {
-            return false;
-        }
-
-        PersistentDataContainer data = item.getItemMeta().getPersistentDataContainer();
-        NamespacedKey key = new NamespacedKey(plugin, "item-identifier");
-        return data.has(key, PersistentDataType.STRING) && Objects.requireNonNull(data.get(key, PersistentDataType.STRING)).equalsIgnoreCase("runner-tracker");
     }
 
     // Устанавливает новое отображаемое имя для предмета

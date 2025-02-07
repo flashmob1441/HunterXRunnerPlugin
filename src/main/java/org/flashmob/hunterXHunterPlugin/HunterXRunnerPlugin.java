@@ -18,7 +18,6 @@ public final class HunterXRunnerPlugin extends JavaPlugin {
 
         saveDefaultConfig();
 
-        CompassUtil compassUtil = new CompassUtil(this);
         SetRole setRole = new SetRole(roleManager);
         ListRole listRole = new ListRole(roleManager);
 
@@ -30,12 +29,12 @@ public final class HunterXRunnerPlugin extends JavaPlugin {
 
         Objects.requireNonNull(getCommand("suicide")).setExecutor(new Suicide(roleManager));
         Objects.requireNonNull(getCommand("moveto")).setExecutor(new MoveTo(roleManager, this));
-        Objects.requireNonNull(getCommand("getcompass")).setExecutor(new GetCompassCommand(compassUtil));
-        Objects.requireNonNull(getCommand("startgame")).setExecutor(new StartGame(roleManager, this, compassUtil));
+        Objects.requireNonNull(getCommand("getcompass")).setExecutor(new GetCompassCommand(this));
+        Objects.requireNonNull(getCommand("startgame")).setExecutor(new StartGame(roleManager, this));
 
         getServer().getPluginManager().registerEvents(new PlayerExitListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(roleManager, this), this);
-        getServer().getPluginManager().registerEvents(new CompassInteractionListener(), this);
+        getServer().getPluginManager().registerEvents(new CompassInteractionListener(this), this);
         getServer().getPluginManager().registerEvents(new MoveToCooldownResetListener(), this);
         getServer().getPluginManager().registerEvents(new FreezeMoveListener(roleManager), this);
         getServer().getPluginManager().registerEvents(new RunnerPortalListener(roleManager), this);

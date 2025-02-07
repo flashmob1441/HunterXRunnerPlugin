@@ -59,7 +59,7 @@ public class GameLogicListener implements Listener {
                     deadPlayer.setSpectatorTarget(target);
                 }
             }
-        }.runTaskLater(plugin, 2L);
+        }.runTaskLater(plugin, 10L);
 
         // Через несколько тиков (2 тикa) проверяем, остались ли живые Runners – если нет, завершаем игру
         new BukkitRunnable() {

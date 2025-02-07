@@ -11,10 +11,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class GetCompassCommand implements CommandExecutor {
 
-    private final CompassUtil compassUtil;
+    private final Plugin plugin;
 
-    public GetCompassCommand(CompassUtil compassUtil) {
-        this.compassUtil = compassUtil;
+    public GetCompassCommand(Plugin plugin) {
+        this.plugin = plugin;
     }
 
     @Override
@@ -25,7 +25,7 @@ public class GetCompassCommand implements CommandExecutor {
         }
 
         // Выдаем игроку компас
-        compassUtil.giveCompass(player);
+        CompassUtil.giveCompass(plugin, player);
 
         player.sendMessage("Вы получили компас");
         return true;
