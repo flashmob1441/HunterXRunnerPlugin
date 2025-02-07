@@ -1,10 +1,13 @@
 package org.flashmob.hunterXHunterPlugin.commands;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.flashmob.hunterXHunterPlugin.managers.RoleManager;
 import org.flashmob.hunterXHunterPlugin.utils.Role;
 import org.jetbrains.annotations.NotNull;
@@ -19,10 +22,12 @@ public class MoveTo implements CommandExecutor {
     // Хранит UUID игроков, которые использовали команду в текущей жизни
     private static final Set<UUID> usedInLife = new HashSet<>();
     // Длительность кулдауна после смерти (например, 30 секунд)
-    private static final long COOLDOWN_DURATION_MS = 30000;
+    private static int COOLDOWN_DURATION = 1;
 
-    public MoveTo(RoleManager roleManager) {
+    public MoveTo(RoleManager roleManager, Plugin plugin) {
         this.roleManager = roleManager;
+
+        COOLDOWN_DURATION = plugin.getConfig().getInt("teleport_cooldown_in_seconds");
     }
 
     @Override
@@ -78,7 +83,7 @@ public class MoveTo implements CommandExecutor {
             return true;
         }
 
-        if (!player.getWorld().getName().equals(targetPlayer.getWorld().getName())) {
+        if (!player.getWorld().getEnvironment().equals(targetPlayer.getWorld().getEnvironment())) {
             player.sendMessage("Игрок в другом мире.");
             return true;
         }
@@ -90,9 +95,17 @@ public class MoveTo implements CommandExecutor {
             return true;
         }
 
+        if (targetPlayer.isDead()) {
+            player.sendMessage("Игрок мертв.");
+            return true;
+        }
+
         // Телепортируем игрока к целевой локации и сообщаем об успехе
         player.teleport(targetPlayer.getLocation());
-        player.sendMessage("Вы телепортировались к игроку " + targetPlayer.getName() + ".");
+        player.getServer().sendMessage(Component
+                .text(player.getName() + " телепортировался к " + targetPlayer.getName())
+                .color(NamedTextColor.GOLD)
+        );
 
         // Отмечаем, что команда уже использована в этой жизни
         usedInLife.add(playerId);
@@ -108,7 +121,7 @@ public class MoveTo implements CommandExecutor {
     public static void handlePlayerDeath(UUID playerId) {
         if (usedInLife.contains(playerId)) {
             usedInLife.remove(playerId);
-            cooldowns.put(playerId, System.currentTimeMillis() + COOLDOWN_DURATION_MS);
+            cooldowns.put(playerId, System.currentTimeMillis() + COOLDOWN_DURATION * 1000L);
         }
     }
 }

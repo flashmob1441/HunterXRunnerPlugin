@@ -1,12 +1,11 @@
 package org.flashmob.hunterXHunterPlugin.commands;
 
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Server;
+import org.bukkit.Sound;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.attribute.Attribute;
@@ -16,8 +15,11 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.flashmob.hunterXHunterPlugin.HunterXRunnerPlugin;
 import org.flashmob.hunterXHunterPlugin.managers.RoleManager;
+import org.flashmob.hunterXHunterPlugin.utils.CompassUtil;
 import org.flashmob.hunterXHunterPlugin.utils.Role;
+import org.flashmob.hunterXHunterPlugin.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -25,29 +27,44 @@ import java.util.*;
 public class StartGame implements CommandExecutor {
     private final RoleManager roleManager;
     private final Plugin plugin;
+    private final CompassUtil compassUtil;
     // Длительность обратного отсчёта (например, 10 секунд)
-    private static final int COUNTDOWN_SECONDS = 10;
+    private static int COUNTDOWN_SECONDS;
 
-    public StartGame(RoleManager roleManager, Plugin plugin) {
+    public StartGame(RoleManager roleManager, Plugin plugin, CompassUtil compassUtil) {
         this.roleManager = roleManager;
         this.plugin = plugin;
+        this.compassUtil = compassUtil;
+
+        COUNTDOWN_SECONDS = plugin.getConfig().getInt("start_timer_in_seconds");
     }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Only players can use this command.");
+            return true;
+        }
+
         // Восстанавливаем здоровье, насыщение, очищаем инвентарь и сбрасываем достижения для всех игроков
         Collection<? extends Player> allPlayers = Bukkit.getOnlinePlayers();
-        for (Player player : allPlayers) {
-            player.setHealth(Objects.requireNonNull(player.getAttribute(Attribute.MAX_HEALTH)).getBaseValue());
-            player.setFoodLevel(20);
-            player.getInventory().clear();
-            clearAdvancements(player);
+        for (Player onlinePlayer : allPlayers) {
+            onlinePlayer.setHealth(Objects.requireNonNull(onlinePlayer.getAttribute(Attribute.MAX_HEALTH)).getBaseValue());
+            onlinePlayer.setFoodLevel(20);
+            onlinePlayer.setSaturation(5.0F);
+            onlinePlayer.getInventory().clear();
+            clearAdvancements(onlinePlayer);
         }
+
+        player.getWorld().setTime(0L);
 
         // Для игроков с ролью HUNTERS задаём режим Adventure (заморозка)
         for (Player hunter : roleManager.getPlayersInRole(Role.HUNTERS)) {
             hunter.setGameMode(GameMode.ADVENTURE);
+            compassUtil.giveCompass(hunter);
         }
+
+        Utils.setGameStarted(true);
 
         // Запускаем обратный отсчёт, который показывается всем игрокам в виде сообщения над хотбаром
         new CountdownTask(roleManager).runTaskTimer(plugin, 0L, 20L);
@@ -60,8 +77,9 @@ public class StartGame implements CommandExecutor {
 
         while (advancementIterator.hasNext()) {
             AdvancementProgress progress = player.getAdvancementProgress(advancementIterator.next());
-            for (String criteria : progress.getAwardedCriteria())
+            for (String criteria : progress.getAwardedCriteria()) {
                 progress.revokeCriteria(criteria);
+            }
         }
     }
 
@@ -81,7 +99,7 @@ public class StartGame implements CommandExecutor {
             if (secondsRemaining > 0) {
                 // Отправляем сообщение в action bar всем игрокам
                 server.sendActionBar(Component.text("Игра начнется через " + secondsRemaining + " секунд").color(NamedTextColor.GOLD));
-                server.playSound(Sound.sound(Key.key("minecraft:block_note_block_hat"), Sound.Source.PLAYER, 1.0f, 1.0f));
+                Utils.playSoundForAllPlayer(server, Sound.BLOCK_NOTE_BLOCK_HAT);
                 secondsRemaining--;
             } else {
                 // Отсчёт завершён – для всех Hunters меняем игровой режим на Survival (разморозка)
@@ -90,7 +108,7 @@ public class StartGame implements CommandExecutor {
                 }
                 // Выводим сообщение о старте игры всем игрокам
                 server.sendActionBar(Component.text("Игра началась").color(NamedTextColor.GREEN));
-                server.playSound(Sound.sound(Key.key("minecraft:entity_player_levelup"), Sound.Source.PLAYER, 1.0f, 1.0f));
+                Utils.playSoundForAllPlayer(server, Sound.ENTITY_PLAYER_LEVELUP);
                 this.cancel();
             }
         }

@@ -69,11 +69,8 @@ public class SetRole implements CommandExecutor, TabCompleter {
             String input = args[0].toLowerCase();
             suggestions.removeIf(option -> !option.startsWith(input));
         } else if (args.length >= 2) {
-            String typed = args[1].toLowerCase();
             for (Player player : Bukkit.getOnlinePlayers()) {
-                if (player.getName().toLowerCase().startsWith(typed)) {
-                    suggestions.add(player.getName());
-                }
+                suggestions.add(player.getName());
             }
         }
         return suggestions;

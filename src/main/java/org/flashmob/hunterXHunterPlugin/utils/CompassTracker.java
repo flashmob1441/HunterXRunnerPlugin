@@ -1,16 +1,19 @@
 package org.flashmob.hunterXHunterPlugin.utils;
 
 import net.kyori.adventure.text.Component;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.CompassMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.flashmob.hunterXHunterPlugin.managers.RoleManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class CompassTracker {
     private final Player player; // охотник (hunter)
@@ -42,7 +45,7 @@ public class CompassTracker {
         List<Player> validTargets = getValidTargets();
 
         if (validTargets.isEmpty()) {
-            updateHeldCompassName("Компас указывает на: Нет игроков");
+            updateHeldCompassName("Нет спидранеров");
             return;
         }
 
@@ -52,15 +55,20 @@ public class CompassTracker {
 
         Player target = validTargets.get(targetIndex);
 
-        if (player.getWorld().equals(target.getWorld())) {
+
+        if (target.getGameMode().equals(GameMode.SPECTATOR)) {
+            nextTarget();
+            return;
+        }
+        if (player.getWorld().getEnvironment().equals(target.getWorld().getEnvironment())) {
             // Если hunter и runner находятся в одном мире, устанавливаем позицию runner.
-            player.setCompassTarget(target.getLocation());
+            updateCompassLodestoneLoc(target.getLocation());
             updateHeldCompassName("Компас указывает на: " + target.getName());
         } else {
             // Если runner в другом мире, пытаемся получить сохранённую точку портала
-            Location portalLocation = PortalTracker.getPortalLocation(target.getUniqueId());
-            if (portalLocation != null && portalLocation.getWorld().equals(player.getWorld())) {
-                player.setCompassTarget(portalLocation);
+            Location portalLocation = PortalTracker.getPortalLocation(target.getUniqueId(), player.getWorld());
+            if (portalLocation != null && portalLocation.getWorld().getEnvironment().equals(player.getWorld().getEnvironment())) {
+                updateCompassLodestoneLoc(portalLocation);
                 updateHeldCompassName("Компас указывает на: " + target.getName() + " (портал)");
             } else {
                 // Если сохранённой точки нет – просто обновляем название,
@@ -77,7 +85,7 @@ public class CompassTracker {
         List<Player> validTargets = getValidTargets();
 
         if (validTargets.isEmpty()) {
-            updateHeldCompassName("Компас указывает на: Нет игроков");
+            updateHeldCompassName("Нет спидранеров");
             return;
         }
         targetIndex = (targetIndex + 1) % validTargets.size();
@@ -97,31 +105,59 @@ public class CompassTracker {
      * @param newDisplayName новое имя для компаса
      */
     private void updateHeldCompassName(String newDisplayName) {
-        // Сначала пробуем обновить компас, если он находится в основном слоте
+        ItemStack compass = getPlayerCompass();
+        if (compass != null && !PlainTextComponentSerializer.plainText().serialize(compass.displayName()).equals("[" + newDisplayName + "]")) {
+            setItemDisplayName(compass, newDisplayName);
+        }
+    }
+
+    private void updateCompassLodestoneLoc(Location location) {
+        ItemStack compass = getPlayerCompass();
+        if (compass != null) {
+            CompassMeta compassMeta = (CompassMeta) compass.getItemMeta();
+            if (player.getWorld().getEnvironment().equals(World.Environment.NORMAL)) {
+                if (compassMeta.isLodestoneCompass()) {
+                    compassMeta.clearLodestone();
+                    compass.setItemMeta(compassMeta);
+                }
+                player.setCompassTarget(location);
+            } else {
+                compassMeta.setLodestone(location);
+                compassMeta.setLodestoneTracked(false);
+                compass.setItemMeta(compassMeta);
+            }
+        }
+    }
+
+    private ItemStack getPlayerCompass() {
         ItemStack mainHandItem = player.getInventory().getItemInMainHand();
         if (isCompass(mainHandItem)) {
-            setItemDisplayName(mainHandItem, newDisplayName);
-            return;
+            return mainHandItem;
         }
         // Если нет – пробуем off-hand
         ItemStack offHandItem = player.getInventory().getItemInOffHand();
         if (isCompass(offHandItem)) {
-            setItemDisplayName(offHandItem, newDisplayName);
+            return offHandItem;
         }
+        return null;
     }
 
     // Проверка, что заданный ItemStack — компас
     private boolean isCompass(ItemStack item) {
-        return item != null && item.getType() == Material.COMPASS;
+        if (!item.hasItemMeta()) {
+            return false;
+        }
+
+        PersistentDataContainer data = item.getItemMeta().getPersistentDataContainer();
+        NamespacedKey key = new NamespacedKey(plugin, "item-identifier");
+        return data.has(key, PersistentDataType.STRING) && Objects.requireNonNull(data.get(key, PersistentDataType.STRING)).equalsIgnoreCase("runner-tracker");
     }
 
     // Устанавливает новое отображаемое имя для предмета
     private void setItemDisplayName(ItemStack item, String displayName) {
-        if (item.hasItemMeta()) {
-            ItemMeta meta = item.getItemMeta();
-            meta.displayName(Component.text(displayName));
-            item.setItemMeta(meta);
-        }
+        CompassMeta meta = (CompassMeta) item.getItemMeta();
+        meta.displayName(Component.text(displayName));
+        item.setItemMeta(meta);
     }
 
     private List<Player> getValidTargets() {
