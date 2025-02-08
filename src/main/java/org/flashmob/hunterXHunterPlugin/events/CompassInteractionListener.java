@@ -27,7 +27,7 @@ public class CompassInteractionListener implements Listener {
 
         // Если предмет отсутствует или это не компас, выходим
         ItemStack item = event.getItem();
-        if (item == null || CompassUtil.isCompass(plugin, item)) {
+        if (item == null || !CompassUtil.isCompass(plugin, item)) {
             return;
         }
 

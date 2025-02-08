@@ -4,7 +4,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.flashmob.hunterXHunterPlugin.commands.*;
 import org.flashmob.hunterXHunterPlugin.events.*;
 import org.flashmob.hunterXHunterPlugin.managers.RoleManager;
-import org.flashmob.hunterXHunterPlugin.utils.CompassUtil;
 
 import java.util.Objects;
 
@@ -31,6 +30,7 @@ public final class HunterXRunnerPlugin extends JavaPlugin {
         Objects.requireNonNull(getCommand("moveto")).setExecutor(new MoveTo(roleManager, this));
         Objects.requireNonNull(getCommand("getcompass")).setExecutor(new GetCompassCommand(this));
         Objects.requireNonNull(getCommand("startgame")).setExecutor(new StartGame(roleManager, this));
+        Objects.requireNonNull(getCommand("hunterchat")).setExecutor(new HunterChat(roleManager));
 
         getServer().getPluginManager().registerEvents(new PlayerExitListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(roleManager, this), this);

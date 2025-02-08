@@ -25,3 +25,6 @@ commands:
   listrole:
     description: Players in role
     usage: /<command> [hunters|runners]
+  hunterchat:
+    description: Hunter chat
+    usage: /<command> text

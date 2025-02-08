@@ -26,8 +26,6 @@ public class GameLogicListener implements Listener {
     private final Plugin plugin;
     // Задержка до возрождения мертвого Runner (секунды)
     private final int RESPAWN_DELAY_SECONDS;
-    // Флаг окончания игры
-    private boolean gameEnded = false;
 
     public GameLogicListener(RoleManager roleManager, Plugin plugin) {
         this.roleManager = roleManager;
@@ -38,6 +36,7 @@ public class GameLogicListener implements Listener {
 
     @EventHandler
     public void onRunnerDeath(PlayerDeathEvent event) {
+        plugin.getLogger().info(String.valueOf(Utils.isGameStarted()));
         Player deadPlayer = event.getPlayer();
         Optional<Role> roleOpt = roleManager.getRole(deadPlayer);
         if (roleOpt.isEmpty() || roleOpt.get() != Role.RUNNERS || !Utils.isGameStarted()) {
@@ -59,7 +58,7 @@ public class GameLogicListener implements Listener {
                     deadPlayer.setSpectatorTarget(target);
                 }
             }
-        }.runTaskLater(plugin, 10L);
+        }.runTaskLater(plugin, 1L);
 
         // Через несколько тиков (2 тикa) проверяем, остались ли живые Runners – если нет, завершаем игру
         new BukkitRunnable() {
@@ -73,7 +72,7 @@ public class GameLogicListener implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
-                if (!gameEnded) {
+                if (Utils.isGameStarted()) {
                     deadPlayer.setGameMode(GameMode.SURVIVAL);
                     ScoreboardUtil.clearRespawnTimerForRunner(deadPlayer.getName());
                     Utils.playSoundForAllPlayer(plugin.getServer(), Sound.ENTITY_VILLAGER_TRADE);
@@ -101,8 +100,8 @@ public class GameLogicListener implements Listener {
                 break;
             }
         }
-        if (allDead && !gameEnded) {
-            gameEnded = true;
+        if (allDead && Utils.isGameStarted()) {
+            Utils.setGameStarted(false);
             Server server = Bukkit.getServer();
             // Выводим сообщение о победе Hunters для всех игроков и проигрываем звук
             Utils.playSoundForAllPlayer(server, Sound.UI_TOAST_CHALLENGE_COMPLETE);

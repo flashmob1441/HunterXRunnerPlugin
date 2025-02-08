@@ -55,11 +55,6 @@ public class CompassTracker {
 
         Player target = validTargets.get(targetIndex);
 
-
-        if (target.getGameMode().equals(GameMode.SPECTATOR)) {
-            nextTarget();
-            return;
-        }
         if (player.getWorld().getEnvironment().equals(target.getWorld().getEnvironment())) {
             // Если hunter и runner находятся в одном мире, устанавливаем позицию runner.
             updateCompassLodestoneLoc(target.getLocation());
@@ -153,7 +148,7 @@ public class CompassTracker {
         List<Player> runners = roleManager.getPlayersInRole(Role.RUNNERS);
         List<Player> validTargets = new ArrayList<>();
         for (Player p : runners) {
-            if (!p.equals(player)) {
+            if (!p.equals(player) && !p.getGameMode().equals(GameMode.SPECTATOR)) {
                 validTargets.add(p);
             }
         }
