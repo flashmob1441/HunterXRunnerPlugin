@@ -36,7 +36,6 @@ public class GameLogicListener implements Listener {
 
     @EventHandler
     public void onRunnerDeath(PlayerDeathEvent event) {
-        plugin.getLogger().info(String.valueOf(Utils.isGameStarted()));
         Player deadPlayer = event.getPlayer();
         Optional<Role> roleOpt = roleManager.getRole(deadPlayer);
         if (roleOpt.isEmpty() || roleOpt.get() != Role.RUNNERS || !Utils.isGameStarted()) {
