@@ -26,6 +26,7 @@ public final class HunterXRunnerPlugin extends JavaPlugin {
         Objects.requireNonNull(getCommand("listrole")).setExecutor(listRole);
         Objects.requireNonNull(getCommand("listrole")).setTabCompleter(listRole);
 
+        Objects.requireNonNull(getCommand("devstart")).setExecutor(new DevStartGame());
         Objects.requireNonNull(getCommand("suicide")).setExecutor(new Suicide(roleManager));
         Objects.requireNonNull(getCommand("moveto")).setExecutor(new MoveTo(roleManager, this));
         Objects.requireNonNull(getCommand("getcompass")).setExecutor(new GetCompassCommand(this));

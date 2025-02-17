@@ -73,6 +73,10 @@ public class GameLogicListener implements Listener {
             public void run() {
                 if (Utils.isGameStarted()) {
                     deadPlayer.setGameMode(GameMode.SURVIVAL);
+                    Player target = getAliveRunner(deadPlayer);
+                    if (target != null) {
+                        deadPlayer.teleport(target.getLocation());
+                    }
                     ScoreboardUtil.clearRespawnTimerForRunner(deadPlayer.getName());
                     Utils.playSoundForAllPlayer(plugin.getServer(), Sound.ENTITY_VILLAGER_TRADE);
                 }

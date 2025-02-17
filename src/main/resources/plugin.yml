@@ -28,3 +28,6 @@ commands:
   hunterchat:
     description: Hunter chat
     usage: /<command> text
+  devstart:
+    description: Dev start game
+    usage: /<command>
