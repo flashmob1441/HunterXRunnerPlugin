@@ -27,4 +27,11 @@ public class CompassManager {
             tracker.cancel();
         }
     }
+
+    public static void cancelAllTrackers() {
+        for (CompassTracker tracker : trackerMap.values()) {
+            tracker.cancel();
+        }
+        trackerMap.clear();
+    }
 }

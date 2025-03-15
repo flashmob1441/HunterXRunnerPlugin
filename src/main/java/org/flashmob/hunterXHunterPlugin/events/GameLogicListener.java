@@ -13,10 +13,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.flashmob.hunterXHunterPlugin.managers.RoleManager;
-import org.flashmob.hunterXHunterPlugin.utils.RespawnCountdownTask;
-import org.flashmob.hunterXHunterPlugin.utils.Role;
-import org.flashmob.hunterXHunterPlugin.utils.ScoreboardUtil;
-import org.flashmob.hunterXHunterPlugin.utils.Utils;
+import org.flashmob.hunterXHunterPlugin.utils.*;
 
 import java.util.Optional;
 
@@ -31,7 +28,7 @@ public class GameLogicListener implements Listener {
         this.roleManager = roleManager;
         this.plugin = plugin;
 
-        RESPAWN_DELAY_SECONDS = plugin.getConfig().getInt("runner_time_to_spectator_in_seconds");
+        RESPAWN_DELAY_SECONDS = plugin.getConfig().getInt(ConfigKeys.RUNNERS_SPECTATOR_TIME, 300);
     }
 
     @EventHandler
@@ -108,7 +105,8 @@ public class GameLogicListener implements Listener {
             Server server = Bukkit.getServer();
             // Выводим сообщение о победе Hunters для всех игроков и проигрываем звук
             Utils.playSoundForAllPlayer(server, Sound.UI_TOAST_CHALLENGE_COMPLETE);
-            server.sendTitlePart(TitlePart.TITLE, Component.text("Победили Хантеры"));
+            String winMessage = plugin.getConfig().getString(ConfigKeys.MESSAGE_HUNTERS_WIN, "Победили Хантеры");
+            server.sendTitlePart(TitlePart.TITLE, Component.text(winMessage));
         }
     }
 }

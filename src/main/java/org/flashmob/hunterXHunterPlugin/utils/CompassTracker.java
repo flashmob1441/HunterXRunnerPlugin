@@ -32,7 +32,7 @@ public class CompassTracker {
 
     // Запускает повторяющуюся задачу обновления компаса (каждые 5 секунд)
     private void startUpdating() {
-        taskId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, this::updateCompassTarget, 0L, 20L);
+        taskId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, this::updateCompassTarget, 0L, 40L);
     }
 
     /**

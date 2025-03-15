@@ -7,13 +7,22 @@ import org.bukkit.entity.Player;
 public class Utils {
 
     private static boolean gameStarted = false;
+    private static boolean gameStarting = false;
 
     public static boolean isGameStarted() {
         return gameStarted;
     }
 
+    public static boolean isGameStarting() {
+        return gameStarting;
+    }
+
     public static void setGameStarted(boolean gameStarted) {
         Utils.gameStarted = gameStarted;
+    }
+
+    public static void setGameStarting(boolean gameStarting) {
+        Utils.gameStarting = gameStarting;
     }
 
     public static void playSoundForAllPlayer(Server server, Sound sound) {

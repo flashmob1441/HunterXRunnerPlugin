@@ -4,10 +4,12 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.flashmob.hunterXHunterPlugin.managers.RoleManager;
 import org.flashmob.hunterXHunterPlugin.utils.Role;
+import org.flashmob.hunterXHunterPlugin.utils.Utils;
 
 import java.util.Optional;
 
@@ -18,19 +20,23 @@ public class FreezeMoveListener implements Listener {
         this.roleManager = roleManager;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     public void onPlayerMove(PlayerMoveEvent event) {
+        if (!Utils.isGameStarted()) {
+            return;
+        }
+
+        Location from = event.getFrom();
+        Location to = event.getTo();
+        if (from.getBlockX() == to.getBlockX() && from.getBlockZ() == to.getBlockZ()) {
+            return;
+        }
+
         Player player = event.getPlayer();
         Optional<Role> roleOpt = roleManager.getRole(player);
         // Применяем блокировку только для игроков с ролью HUNTERS, находящихся в режиме Adventure
         if (roleOpt.isPresent() && roleOpt.get() == Role.HUNTERS && player.getGameMode() == GameMode.ADVENTURE) {
-            Location from = event.getFrom();
-            Location to = event.getTo();
-            // Допускаем изменение координаты Y (прыжок), но запрещаем изменение X и Z (ходьбу)
-            if (from.getBlockX() != to.getBlockX() || from.getBlockZ() != to.getBlockZ()) {
-                event.setTo(from);
-            }
+            event.setTo(from);
         }
     }
-
 }

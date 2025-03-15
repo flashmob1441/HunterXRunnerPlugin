@@ -3,7 +3,10 @@ package org.flashmob.hunterXHunterPlugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.flashmob.hunterXHunterPlugin.commands.*;
 import org.flashmob.hunterXHunterPlugin.events.*;
+import org.flashmob.hunterXHunterPlugin.managers.CompassManager;
 import org.flashmob.hunterXHunterPlugin.managers.RoleManager;
+import org.flashmob.hunterXHunterPlugin.utils.PortalTracker;
+import org.flashmob.hunterXHunterPlugin.utils.Utils;
 
 import java.util.Objects;
 
@@ -13,10 +16,29 @@ public final class HunterXRunnerPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
-
         saveDefaultConfig();
+        registerCommands();
+        registerEventListeners();
 
+        getLogger().info("HunterXRunner started");
+    }
+
+    @Override
+    public void onDisable() {
+        saveConfig();
+
+        CompassManager.cancelAllTrackers();
+
+        getServer().getScheduler().cancelTasks(this);
+
+        Utils.setGameStarted(false);
+
+        PortalTracker.clearAll();
+
+        getLogger().info("HunterXRunner stopped");
+    }
+
+    private void registerCommands() {
         SetRole setRole = new SetRole(roleManager);
         ListRole listRole = new ListRole(roleManager);
 
@@ -32,7 +54,9 @@ public final class HunterXRunnerPlugin extends JavaPlugin {
         Objects.requireNonNull(getCommand("getcompass")).setExecutor(new GetCompassCommand(this));
         Objects.requireNonNull(getCommand("startgame")).setExecutor(new StartGame(roleManager, this));
         Objects.requireNonNull(getCommand("hunterchat")).setExecutor(new HunterChat(roleManager));
+    }
 
+    private void registerEventListeners() {
         getServer().getPluginManager().registerEvents(new PlayerExitListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(roleManager, this), this);
         getServer().getPluginManager().registerEvents(new CompassInteractionListener(this), this);
@@ -40,14 +64,7 @@ public final class HunterXRunnerPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new FreezeMoveListener(roleManager), this);
         getServer().getPluginManager().registerEvents(new RunnerPortalListener(roleManager), this);
         getServer().getPluginManager().registerEvents(new RoleAssignmentListener(roleManager), this);
-        getServer().getPluginManager().registerEvents(new RunnerWinListener(roleManager), this);
+        getServer().getPluginManager().registerEvents(new RunnerWinListener(roleManager, this), this);
         getServer().getPluginManager().registerEvents(new GameLogicListener(roleManager, this), this);
-
-        getLogger().info("HunterXRunner started");
-    }
-
-    @Override
-    public void onDisable() {
-        // Plugin shutdown logic
     }
 }

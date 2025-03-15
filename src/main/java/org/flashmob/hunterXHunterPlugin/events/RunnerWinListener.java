@@ -9,7 +9,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
+import org.bukkit.plugin.Plugin;
 import org.flashmob.hunterXHunterPlugin.managers.RoleManager;
+import org.flashmob.hunterXHunterPlugin.utils.ConfigKeys;
 import org.flashmob.hunterXHunterPlugin.utils.Role;
 import org.flashmob.hunterXHunterPlugin.utils.Utils;
 
@@ -18,9 +20,11 @@ import java.util.Optional;
 public class RunnerWinListener implements Listener {
     private static final String VICTORY_ADVANCEMENT_KEY = "end/kill_dragon";
     private final RoleManager roleManager;
+    private final Plugin plugin;
 
-    public RunnerWinListener(RoleManager roleManager) {
+    public RunnerWinListener(RoleManager roleManager, Plugin plugin) {
         this.roleManager = roleManager;
+        this.plugin = plugin;
     }
 
     @EventHandler
@@ -39,7 +43,8 @@ public class RunnerWinListener implements Listener {
             // Объявляем победу Runners
             Server server = Bukkit.getServer();
             Utils.playSoundForAllPlayer(server, Sound.UI_TOAST_CHALLENGE_COMPLETE);
-            server.sendTitlePart(TitlePart.TITLE, Component.text("Победили Спидранеры"));
+            String winMessage = plugin.getConfig().getString(ConfigKeys.MESSAGE_RUNNERS_WIN, "Победили Спидранеры");
+            server.sendTitlePart(TitlePart.TITLE, Component.text(winMessage));
             Utils.setGameStarted(false);
         }
     }

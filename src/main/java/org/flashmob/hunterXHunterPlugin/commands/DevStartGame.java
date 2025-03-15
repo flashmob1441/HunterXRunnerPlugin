@@ -16,7 +16,13 @@ public class DevStartGame implements CommandExecutor {
             return true;
         }
 
+        if (Utils.isGameStarted()) {
+            sender.sendMessage("Игра уже идет.");
+            return true;
+        }
+
         Utils.setGameStarted(true);
+        sender.sendMessage("Игра началась.");
         return true;
     }
 }

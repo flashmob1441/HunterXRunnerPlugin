@@ -38,4 +38,8 @@ public class PortalTracker {
         }
         return worldLocations.get(world.getName());
     }
+
+    public static void clearAll() {
+        runnerPortalLocations.clear();
+    }
 }

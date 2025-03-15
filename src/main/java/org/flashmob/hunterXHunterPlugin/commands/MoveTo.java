@@ -9,6 +9,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.flashmob.hunterXHunterPlugin.managers.RoleManager;
+import org.flashmob.hunterXHunterPlugin.utils.ConfigKeys;
 import org.flashmob.hunterXHunterPlugin.utils.Role;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,11 +27,11 @@ public class MoveTo implements CommandExecutor {
     // Хранит UUID игроков, которые использовали команду в текущей жизни
     private static final Set<UUID> usedInLife = new HashSet<>();
     // Длительность кулдауна после смерти (в секундах)
-    private static int COOLDOWN_DURATION = 1;
+    private static int COOLDOWN_DURATION = 30;
 
     public MoveTo(RoleManager roleManager, Plugin plugin) {
         this.roleManager = roleManager;
-        COOLDOWN_DURATION = plugin.getConfig().getInt("teleport_cooldown_in_seconds");
+        COOLDOWN_DURATION = plugin.getConfig().getInt(ConfigKeys.HUNTERS_TELEPORT_COOLDOWN, 30);
     }
 
     @Override

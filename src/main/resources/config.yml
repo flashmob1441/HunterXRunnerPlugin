@@ -1,3 +1,24 @@
-teleport_cooldown_in_seconds: 30
-start_timer_in_seconds: 120
-runner_time_to_spectator_in_seconds: 300
+# HunterXRunner - настройки плагина
+# Версия конфигурации: 1.0
+
+# Настройки игрового процесса
+game:
+  # Время до начала игры (в секундах)
+  start_timer_in_seconds: 120
+  
+  # Настройки бегунов
+  runners:
+    # Время нахождения в спектаторе после смерти (в секундах)
+    spectator_time_in_seconds: 300
+
+  # Настройки охотников
+  hunters:
+    # Кулдаун телепортации для охотников (в секундах)
+    teleport_cooldown_in_seconds: 30
+
+# Настройки сообщений
+messages:
+  hunters_win: "Охотники победили!"
+  runners_win: "Бегуны победили!"
+  game_start: "Игра началась!"
+  countdown: "Игра начнется через"

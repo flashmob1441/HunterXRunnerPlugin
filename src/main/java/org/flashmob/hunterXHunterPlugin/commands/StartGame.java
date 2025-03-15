@@ -18,6 +18,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.flashmob.hunterXHunterPlugin.HunterXRunnerPlugin;
 import org.flashmob.hunterXHunterPlugin.managers.RoleManager;
 import org.flashmob.hunterXHunterPlugin.utils.CompassUtil;
+import org.flashmob.hunterXHunterPlugin.utils.ConfigKeys;
 import org.flashmob.hunterXHunterPlugin.utils.Role;
 import org.flashmob.hunterXHunterPlugin.utils.Utils;
 import org.jetbrains.annotations.NotNull;
@@ -34,13 +35,18 @@ public class StartGame implements CommandExecutor {
         this.roleManager = roleManager;
         this.plugin = plugin;
 
-        COUNTDOWN_SECONDS = plugin.getConfig().getInt("start_timer_in_seconds");
+        COUNTDOWN_SECONDS = plugin.getConfig().getInt(ConfigKeys.GAME_START_TIMER, 120);
     }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage("Only players can use this command.");
+            return true;
+        }
+
+        if (Utils.isGameStarted()) {
+            sender.sendMessage("Игра уже идет.");
             return true;
         }
 
@@ -63,6 +69,7 @@ public class StartGame implements CommandExecutor {
         }
 
         Utils.setGameStarted(true);
+        Utils.setGameStarting(true);
 
         // Запускаем обратный отсчёт, который показывается всем игрокам в виде сообщения над хотбаром
         new CountdownTask(roleManager).runTaskTimer(plugin, 0L, 20L);
@@ -82,7 +89,7 @@ public class StartGame implements CommandExecutor {
     }
 
     // Внутренний класс обратного отсчёта
-    private static class CountdownTask extends BukkitRunnable {
+    private class CountdownTask extends BukkitRunnable {
         private int secondsRemaining;
         private final RoleManager roleManager;
 
@@ -96,16 +103,19 @@ public class StartGame implements CommandExecutor {
             Server server = Bukkit.getServer();
             if (secondsRemaining > 0) {
                 // Отправляем сообщение в action bar всем игрокам
-                server.sendActionBar(Component.text("Игра начнется через " + secondsRemaining + " секунд").color(NamedTextColor.GOLD));
+                String message = plugin.getConfig().getString(ConfigKeys.MESSAGE_COUNTDOWN, "Игра начнется через") + " " + secondsRemaining;
+                server.sendActionBar(Component.text(message).color(NamedTextColor.GOLD));
                 Utils.playSoundForAllPlayer(server, Sound.BLOCK_NOTE_BLOCK_HAT);
                 secondsRemaining--;
             } else {
+                Utils.setGameStarting(false);
                 // Отсчёт завершён – для всех Hunters меняем игровой режим на Survival (разморозка)
                 for (Player hunter : roleManager.getPlayersInRole(Role.HUNTERS)) {
                     hunter.setGameMode(GameMode.SURVIVAL);
                 }
                 // Выводим сообщение о старте игры всем игрокам
-                server.sendActionBar(Component.text("Игра началась").color(NamedTextColor.GREEN));
+                String startMessage = plugin.getConfig().getString(ConfigKeys.MESSAGE_GAME_START, "Игра началась");
+                server.sendActionBar(Component.text(startMessage).color(NamedTextColor.GREEN));
                 Utils.playSoundForAllPlayer(server, Sound.ENTITY_PLAYER_LEVELUP);
                 this.cancel();
             }
